@@ -6,16 +6,16 @@ use Exception;
 
 class CustomException extends Exception
 {
-    protected $code;
+    protected $statusCode;
 
-    public function __construct($message,$code = 400)
+    public function __construct(string $message = "", int $statusCode = 400)
     {
         parent::__construct($message);
-        $this->code = $code;
+        $this->statusCode = $statusCode;
     }
 
     public function getStatusCode(): int
     {
-        return $this->code;
+        return $this->statusCode;
     }
 }

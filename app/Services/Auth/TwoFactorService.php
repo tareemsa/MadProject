@@ -3,50 +3,42 @@
 namespace App\Services\Auth;
 
 use App\Models\User;
-use Illuminate\Support\Facades\Cache;
-use App\Exceptions\Auth\TwoFactorFailedException;
+use App\Exceptions\CustomException;
+use App\Services\CodeExpirationService;
+use Illuminate\Support\Str;
 
 class TwoFactorService
 {
-    /**
-     * توليد كود 2FA وتخزينه بالكاش
-     */
-    public function generate2FACode(User $user): array
+    protected CodeExpirationService $codeExpirationService;
+
+    public function __construct(CodeExpirationService $codeExpirationService)
     {
-        $code = (string) rand(100000, 999999);
-
-        Cache::put($this->getCacheKey($user), $code, now()->addMinutes(10)); // يخزن الكود لمدة 10 دقايق
-
-        return [
-            'data' => $code,
-            'message' => '2FA code generated and cached successfully.',
-        ];
+        $this->codeExpirationService = $codeExpirationService;
     }
 
-    /**
-     * التحقق من كود 2FA المخزن بالكاش
-     */
-    public function verify2FACode(User $user, string $code): array
+    public function generate2FACode(User $user): string
     {
-        $cachedCode = Cache::get($this->getCacheKey($user));
+        $code = Str::random(6);
 
-        if (!$cachedCode || $cachedCode !== $code) {
-            throw new TwoFactorFailedException();
+        $stored = $this->codeExpirationService->storeCode($user->email, $code, '2fa');
+
+        if (! $stored) {
+            throw new CustomException('Failed to generate 2FA code.', 500);
         }
 
-        Cache::forget($this->getCacheKey($user)); // حذف الكود بعد التحقق
-
-        return [
-            'data' => true,
-            'message' => '2FA verification successful.',
-        ];
+        return $code;
     }
 
-    /**
-     * توليد اسم الكاش كي للمستخدم
-     */
-    private function getCacheKey(User $user): string
+    public function verify2FACode(User $user, string $inputCode): bool
     {
-        return '2fa_code_user_' . $user->id;
+        $storedCode = $this->codeExpirationService->getCode($user->email);
+
+        if (! $storedCode || $storedCode !== $inputCode) {
+            throw new CustomException('Invalid or expired 2FA code.', 403);
+        }
+
+        $this->codeExpirationService->forgetCode($user->email);
+
+        return true;
     }
 }

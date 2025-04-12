@@ -1,52 +1,41 @@
 <?php
 
 namespace App\Services\Auth;
-
+use App\Services;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
-use App\Exceptions\Auth\UserNotFoundException;
-use App\Exceptions\Auth\InvalidCredentialsException;
+use App\Exceptions\CustomException;
 
 class UserService
 {
-    public function createUser(array $data): User
+    public function createUser(array $data): array
     {
-        return User::create([
-            'name' => $data['name'],
-            'email' => $data['email'],
-            'password' => bcrypt($data['password']),
+        $user = User::create([
+            'name'     => $data['name'],
+            'email'    => $data['email'],
+            'password' => Hash::make($data['password']),
         ]);
-        return [
-            'data' => $user,
-            'message' => 'User created successfully.',
-        ];
-    }
-
-    public function getUserByEmail(string $email): User
-    {
-        $user = User::where('email', $email)->first();
 
         if (!$user) {
-            throw new UserNotFoundException();
+            throw new CustomException('Failed to create user', 500);
         }
 
-        return $user;
+        return [
+            'user' => $user,
+            'message' => 'User registered successfully.',
+            'code' => 200,
+        ];
+        
+    }
+    public function getUserByEmail(string $email): User
+{
+    $user = User::where('email', $email)->first();
+
+    if (! $user) {
+        throw new CustomException('User not found.', 404);
     }
 
-    public function authenticateUser(string $email, string $password): User
-    {
-        $user = $this->getUserByEmail($email);
+    return $user;
+}
 
-        if (!Hash::check($password, $user->password)) {
-            throw new InvalidCredentialsException();
-        }
-
-        return $user;
-    }
-
-    public function markEmailVerified(User $user): void
-    {
-        $user->email_verified_at = now();
-        $user->save();
-    }
 }

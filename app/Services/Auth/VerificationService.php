@@ -2,75 +2,78 @@
 
 namespace App\Services\Auth;
 
-use App\Models\User;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Str;
+use App\Models\User;
+use App\Exceptions\CustomException;
+use App\Services\CodeExpirationService;
 use App\Services\MailService;
-use App\Exceptions\Auth\VerificationCodeExpiredException;
-use App\Exceptions\Auth\VerificationCodeInvalidException;
-use App\Exceptions\Auth\VerificationCodeTypeMismatchException;
+
 
 class VerificationService
 {
-    public function __construct(private MailService $mailService) {}
 
-    public function generateCode(User $user, string $type): int
+    protected CodeExpirationService $codeExpirationService;
+    protected MailService $mailService;
+    
+    public function __construct(CodeExpirationService $codeExpirationService, MailService $mailService)
     {
-        $code = rand(100000, 999999);
+        $this->codeExpirationService = $codeExpirationService;
+        $this->mailService = $mailService; 
+    }
+    
 
-        Cache::put(
-            $this->getCacheKey($user),
-            ['code' => $code, 'type' => $type],
-            now()->addMinutes(10)
-        );
+    public function generateCode(User $user, string $type = 'registration'): string
+    {
+        $code = Str::random(6);
+
+        $stored = $this->codeExpirationService->storeCode($user->email, $code, $type);
+
+        if (!$stored) {
+            throw new CustomException('Failed to store verification code', 500);
+        }
 
         return $code;
     }
 
-    public function sendVerificationCode(User $user, string $type): void
+    public function verifyCode(User $user, string $inputCode): array
     {
-        $code = $this->generateCode($user, $type);
-        $this->mailService->sendVerificationEmail($user, $code);
+        $storedCode = $this->codeExpirationService->getCode($user->email);
+
+        if (!$storedCode) {
+            throw new CustomException('Verification code expired or not found', 404);
+        }
+
+        if ($storedCode !== $inputCode) {
+            throw new CustomException('Invalid verification code', 400);
+        }
+
+        $this->codeExpirationService->forgetCode($user->email);
+
+        return ['data' => $user, 'message' => 'The code is correct. You have successfully verified.', 'code' => 200];
+
     }
-
-    public function verifyCode(array $request, int $userId): array
-    {
-        $user = User::findOrFail($userId);
-        $data = Cache::get($this->getCacheKey($user));
-
-        if (!$data) {
-            throw new VerificationCodeExpiredException();
-        }
-
-        if ($data['code'] != $request['code']) {
-            throw new VerificationCodeInvalidException();
-        }
-
-        if ($data['type'] !== $request['type']) {
-            throw new VerificationCodeTypeMismatchException();
-        }
-
-        Cache::forget($this->getCacheKey($user));
-
+    public function resendVerificationCode(User $user, string $type = 'registration'): array
+{
+    if ($user->email_verified_at) {
         return [
-            'data' => $user,
-            'message' => 'Verification code confirmed successfully.'
+            'success' => false,
+            'message' => 'Email already verified.',
+            'status' => 400,
         ];
     }
 
-    public function refreshCode(array $request, int $userId): array
-    {
-        $user = User::findOrFail($userId);
-        Cache::forget($this->getCacheKey($user));
-        $this->sendVerificationCode($user, $request['type']);
+    $code = $this->generateCode($user, $type);
 
-        return [
-            'data' => $user,
-            'message' => 'Verification code refreshed and resent.'
-        ];
-    }
+    $this->mailService->sendVerificationCode($user, $code);
 
-    private function getCacheKey(User $user): string
-    {
-        return "user_code_{$user->id}";
-    }
+
+    return [
+        'success' => true,
+        'message' => 'New verification code sent.',
+        'status' => 200,
+    ];
 }
+
+}
+

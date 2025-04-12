@@ -1,64 +1,64 @@
 <?php
 
-
 namespace App\Services\Auth;
 
-
 use App\Models\User;
-use Illuminate\Support\Facades\Mail;
+use App\Services\CodeExpirationService;
+use App\Services\MailService;
+use App\Services\Auth\UserService;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
-use Illuminate\Support\Facades\Cache;
-use App\Exceptions\Auth\UserNotFoundException;
 use App\Exceptions\Auth\PasswordResetTokenInvalidException;
-use App\Exceptions\Auth\EmailSendFailedException;
 
 class PasswordResetService
 {
+    public function __construct(
+        protected UserService $userService,
+        protected CodeExpirationService $codeExpirationService,
+        protected MailService $mailService
+    ) {}
+
     public function sendPasswordResetLink(array $data): array
     {
-        $user = User::where('email', $data['email'])->first();
-
-        if (!$user) {
-            throw new UserNotFoundException();
-        }
+        $user = $this->userService->getUserByEmail($data['email']);
 
         $token = Password::createToken($user);
-        Cache::put("password_reset_{$data['email']}", $token, 600);
 
-        Mail::raw("Reset your password using this link: " . url("/password/reset/{$token}"), function ($message) use ($data) {
-            $message->to($data['email'])->subject('Password Reset');
-        });
+        $this->codeExpirationService->storeCode($user->email, $token, 'reset_password');
 
-        if (count(Mail::failures()) > 0) {
-            throw new EmailSendFailedException();
-        }
+        $resetLink = url("/password/reset/{$token}");
+
+        $this->mailService->sendResetLink($user, $resetLink);
 
         return [
-            'success' => true,
-            'message' => 'Password recovery link sent successfully.',
-            'status' => 200
+            'data' => [], 
+            'message' => 'Password reset link sent ckeck your mail .',
+            'code' => 200
         ];
+        
     }
 
     public function resetPassword(array $data): array
     {
-        $cachedToken = Cache::get("password_reset_{$data['email']}");
+        $user = $this->userService->getUserByEmail($data['email']);
+
+        $cachedToken = $this->codeExpirationService->getCode($user->email);
 
         if ($cachedToken !== $data['token']) {
             throw new PasswordResetTokenInvalidException();
         }
 
-        User::where('email', $data['email'])->update([
+        $user->update([
             'password' => Hash::make($data['password'])
         ]);
 
-        Cache::forget("password_reset_{$data['email']}");
+        $this->codeExpirationService->forgetCode($user->email);
 
         return [
-            'success' => true,
+            'data' => [], 
             'message' => 'Password reset successfully.',
-            'status' => 200
+            'code' => 200
         ];
+        
     }
 }
