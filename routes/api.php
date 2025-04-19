@@ -3,6 +3,8 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\MediaController;
+use App\Http\Controllers\PodcastController;
+use App\Http\Controllers\CommentController;
 
 Route::prefix('auth')->name('auth.')->group(function () {
     
@@ -13,10 +15,14 @@ Route::prefix('auth')->name('auth.')->group(function () {
     Route::post('/password/recover', [AuthController::class, 'sendResetLink'])->name('password.recover');
     Route::post('/password/reset', [AuthController::class, 'resetPassword'])->name('password.reset');
     Route::post('/2fa/verify', [AuthController::class, 'verify2FA'])->name('2fa.verify');
+    Route::get('/podcasts/{podcast}', [PodcastController::class, 'showWithComments']);
+
    
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('/refresh-token', [AuthController::class, 'refreshToken'])->name('token.refresh');
        Route::post('/user/upload-image', [MediaController::class, 'uploadMedia']);
+       Route::post('/upload_podcast', [PodcastController::class, 'store']);
+       Route::post('/comments', [CommentController::class, 'store']);
     });
 
 });

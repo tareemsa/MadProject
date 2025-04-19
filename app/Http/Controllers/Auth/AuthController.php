@@ -14,6 +14,7 @@ use App\Services\Auth\TwoFactorService;
 use App\Http\Requests\PasswordRecoveryRequest;
 use App\Http\Requests\PasswordResetRequest;
 use App\Services\Auth\PasswordResetService;
+use App\Services\MediaService;
 use App\Services\Auth\TokenService;
 use App\Traits\ApiResponseTrait;
 use Illuminate\Http\JsonResponse;
@@ -30,6 +31,8 @@ class AuthController extends Controller
     protected TokenService $tokenService;
     protected MailService $mailService;
     protected PasswordResetService $passwordResetService;
+    protected VerificationService $verificationService;
+    
 
     public function __construct(
         AuthService $authService,
@@ -37,7 +40,9 @@ class AuthController extends Controller
         TwoFactorService $twoFactorService,
         TokenService $tokenService,
         MailService $mailService,
-        PasswordResetService $passwordResetService
+        PasswordResetService $passwordResetService,
+        MediaService $mediaService,
+        VerificationService $verificationService
     ) {
         $this->authService = $authService;
         $this->userService = $userService;
@@ -45,17 +50,22 @@ class AuthController extends Controller
         $this->tokenService = $tokenService;
         $this->mailService = $mailService;
         $this->passwordResetService = $passwordResetService;
+        $this->mediaService = $mediaService;
+        $this->verificationService = $verificationService;
     }
     public function register(RegisterRequest $request): JsonResponse
     {
         $data = $this->userService->createUser($request->validated());
 
+        if ($request->hasFile('image')) {
+            $this->mediaService->storeForModel($data['user'], $request->file('image'));
+        }
         $code = $this->verificationService->generateCode($data['user'],'registration');
         $this->mailService->sendVerificationCode($data['user'], $code);
 
         return self::Success([
             'user' => $data['user'],
-           // 'code' => $code,
+            'code' => $code,
         ], $data['message']);
     }        
     public function verifyEmail(VerifyEmailRequest $request): JsonResponse

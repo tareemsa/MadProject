@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class RegisterRequest extends FormRequest
+class PodcastUploadRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -22,11 +22,11 @@ class RegisterRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name'     => 'required|string|max:255',
-            'email'    => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8',
-            'image' => 'nullable|file|image|max:2048',
-        
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'cover_image' => 'nullable|image|max:2048',
+            'podcast_file' => 'required|file|mimetypes:audio/mpeg,video/mp4,video/quicktime|max:51200',
+
         ];
     }
 }

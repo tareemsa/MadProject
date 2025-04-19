@@ -53,4 +53,9 @@ public function media()
 {
     return $this->morphOne(Media::class, 'mediable');
 }
+public function podcasts()
+{
+    return $this->hasMany(Podcast::class);
+}
+
 }

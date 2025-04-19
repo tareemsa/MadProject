@@ -13,11 +13,11 @@ class MediaController extends Controller
     use ApiResponseTrait;
 
     public function __construct(protected MediaService $mediaService) {}
-    
+
 
     public function uploadMedia(StoreMediaRequest $request): JsonResponse
     {
-        $result = $this->mediaService->storeForUser(auth()->user(), $request->file('image'));
+        $result = $this->mediaService->storeForModel(auth()->user(), $request->file('image'));
     
         return self::Success($result['data'], $result['message'], $result['code']);
     }
