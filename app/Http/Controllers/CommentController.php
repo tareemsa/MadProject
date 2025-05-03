@@ -20,4 +20,24 @@ class CommentController extends Controller
 
         return self::Success($result['data'], $result['message'], $result['code']);
     }
+    ////////////////
+    private function formatCommentsRecursively($comments)
+{
+    if ($comments->isEmpty()) {
+        return [];
+    }
+
+    return $comments->map(function ($comment) {
+        return [
+            'id' => $comment->id,
+            'body' => $comment->body,
+            'user' => [
+                'id' => $comment->user->id,
+                'name' => $comment->user->name,
+            ],
+            'replies' => $this->formatCommentsRecursively($comment->replies),
+        ];
+    });
+}
+
 }

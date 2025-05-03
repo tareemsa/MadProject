@@ -2,7 +2,7 @@
 namespace App\Services;
 
 use App\Models\User;
-
+use Illuminate\Support\Collection;
 use App\Services\CommentableResolverService;
 class CommentService
 {
@@ -25,6 +25,20 @@ class CommentService
             'message' => 'Comment added successfully.',
             'code' => 201,
         ];
+    }
+    public function formatCommentsRecursively(Collection $comments): Collection
+    {
+        return $comments->map(function ($comment) {
+            return [
+                'id' => $comment->id,
+                'body' => $comment->body,
+                'user' => [
+                    'id' => $comment->user->id,
+                    'name' => $comment->user->name,
+                ],
+                'replies' => $this->formatCommentsRecursively($comment->replies),
+            ];
+        });
     }
 }
  

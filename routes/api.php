@@ -15,7 +15,12 @@ Route::prefix('auth')->name('auth.')->group(function () {
     Route::post('/password/recover', [AuthController::class, 'sendResetLink'])->name('password.recover');
     Route::post('/password/reset', [AuthController::class, 'resetPassword'])->name('password.reset');
     Route::post('/2fa/verify', [AuthController::class, 'verify2FA'])->name('2fa.verify');
-    Route::get('/podcasts/{podcast}', [PodcastController::class, 'showWithComments']);
+    Route::get('/podcasts/{podcast}/nested', [PodcastController::class, 'showWithAllNestedComments']);
+    Route::get('/filterPodcastsByCategory', [PodcastController::class, 'filterPodcastsByCategory']);
+    Route::post('/podcasts/{podcast}/view', [PodcastController::class, 'view']);
+   
+
+
 
    
     Route::middleware('auth:sanctum')->group(function () {
@@ -23,6 +28,17 @@ Route::prefix('auth')->name('auth.')->group(function () {
        Route::post('/user/upload-image', [MediaController::class, 'uploadMedia']);
        Route::post('/upload_podcast', [PodcastController::class, 'store']);
        Route::post('/comments', [CommentController::class, 'store']);
+       Route::post('/podcasts/{podcast}/like', [PodcastController::class, 'toggleLike']);
+       Route::post('/podcasts/{podcast}/categories', [PodcastController::class, 'updateCategories']);
+       Route::get('/podcasts/random', [PodcastController::class, 'random']);
+       Route::post('/podcasts/{podcast}/view', [PodcastController::class, 'view']);
+       //Route::get('/podcasts/most-viewed', [PodcastController::class, 'mostViewed']);
+       //Route::get('/podcasts/trending', [PodcastController::class, 'trending']);
+       Route::get('/podcasts/filter', [PodcastController::class, 'filterByCategoryWithMetrics']);
+
+  
+
+
     });
 
 });

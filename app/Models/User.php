@@ -57,5 +57,9 @@ public function podcasts()
 {
     return $this->hasMany(Podcast::class);
 }
+public function podcastViews()
+{
+    return $this->hasMany(PodcastView::class);
+}
 
 }

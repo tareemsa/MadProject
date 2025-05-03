@@ -3,13 +3,15 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\Likable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+
 
 class Podcast extends Model
 {
-    use HasFactory;
+    use HasFactory,Likable;
 
-    protected $fillable = ['user_id', 'title', 'description'];
+    protected $fillable = ['user_id', 'title', 'description','views'];
 
     public function user()
     {
@@ -33,5 +35,14 @@ class Podcast extends Model
     public function comments()
 {
     return $this->morphMany(Comment::class, 'commentable');
+}
+
+public function categories()
+{
+    return $this->morphToMany(Category::class, 'categorizable');
+}
+public function views()
+{
+    return $this->hasMany(PodcastView::class);
 }
 }

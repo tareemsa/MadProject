@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\User;
+use App\Models\PodcastView;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -13,9 +14,19 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
 
-    $this->call(PodcastCommentSeeder::class);
+            $this->call([
+                CategorySeeder::class,
+                UserSeeder::class,
+                PodcastSeeder::class,
+                MediaSeeder::class,
+                CommentSeeder::class,
+               PodcastViewSeeder::class,
+
+              
+            ]);
+        
+        
 
 
 

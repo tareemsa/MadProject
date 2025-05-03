@@ -19,7 +19,7 @@ class MediaFactory extends Factory
         return [
             'file_name' => $this->faker->uuid . '.mp4',
             'file_path' => 'fake/uploads/' . $this->faker->uuid . '.mp4',
-            'file_type' => 'video',
+            'file_type' => MediaTypeEnum::VIDEO->value,
         ];
     }
 }
