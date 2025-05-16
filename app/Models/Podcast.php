@@ -33,9 +33,12 @@ class Podcast extends Model
         return $this->morphOne(Media::class, 'mediable')->where('file_type', 'audio');
     }
     public function comments()
-{
-    return $this->morphMany(Comment::class, 'commentable');
-}
+    {
+        return $this->morphMany(Comment::class, 'commentable')
+            ->whereNull('parent_id') // تجيب التعليقات الأساسية فقط
+            ->with(['replies.user', 'user']); // تجيب الردود + المستخدمين
+    }
+    
 
 public function categories()
 {

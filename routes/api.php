@@ -5,7 +5,8 @@ use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\MediaController;
 use App\Http\Controllers\PodcastController;
 use App\Http\Controllers\CommentController;
-
+use App\Http\Controllers\ChannelController;
+use App\Http\Controllers\SubscriptionController;
 Route::prefix('auth')->name('auth.')->group(function () {
     
     Route::post('/register', [AuthController::class, 'register'])->name('register');
@@ -35,9 +36,12 @@ Route::prefix('auth')->name('auth.')->group(function () {
        //Route::get('/podcasts/most-viewed', [PodcastController::class, 'mostViewed']);
        //Route::get('/podcasts/trending', [PodcastController::class, 'trending']);
        Route::get('/podcasts/filter', [PodcastController::class, 'filterByCategoryWithMetrics']);
+       Route::post('/channel', [ChannelController::class, 'create']);
+       Route::post('/channels/{channel}/subscribe', [SubscriptionController::class, 'toggle']);
+
 
   
-
+ 
 
     });
 

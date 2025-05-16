@@ -110,7 +110,13 @@ public function login(LoginRequest $request): JsonResponse
 
     $this->mailService->sendVerificationCode($result['user'], $code);
 
-    return self::Success([], $result['message'], $result['status']);
+    return self::Success(
+        [
+            'code' => $code
+        ],
+        $result['message'],
+        $result['status']
+    );
 }
 
 public function verify2FA(TwoFactorRequest $request): JsonResponse

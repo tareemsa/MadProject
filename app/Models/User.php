@@ -61,5 +61,14 @@ public function podcastViews()
 {
     return $this->hasMany(PodcastView::class);
 }
+public function channel()
+{
+    return $this->hasOne(Channel::class);
+}
+
+public function subscribedChannels()
+{
+    return $this->belongsToMany(Channel::class, 'subscriptions');
+}
 
 }

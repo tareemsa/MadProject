@@ -47,18 +47,15 @@ class PodcastService
     public function getPodcastWithAllNestedComments(Podcast $podcast): array
     {
         $podcast->load(['media']);
+        $comments = $podcast->comments->get(); 
 
-        $comments = $podcast->comments()
-            ->whereNull('parent_id')
-            ->with(['user', 'replies.user'])
-            ->get();
 
-        $commentsWithNested = $this->commentService->formatCommentsRecursively($comments);
+        //$commentsWithNested = $this->commentService->formatCommentsRecursively($comments);
 
         return [
             'data' => [
                 'podcast' => $podcast,
-                'comments' => $commentsWithNested,
+                'comments' => CommentResource::collection($comments),
             ],
             'message' => 'Podcast with fully nested comments retrieved successfully.',
             'code' => 200,
@@ -103,11 +100,49 @@ class PodcastService
         ];
     }
 
-    public function getRandomPodcasts(int $perPage = 10): array
+    /*public function getRandomPodcasts(int $count = 10): array
+    {
+        $randomIds = cache('random_podcast_ids');
+    
+        if (empty($randomIds)) {
+            $randomIds = Podcast::inRandomOrder()
+                ->limit(50)
+                ->pluck('id')
+                ->toArray();
+    
+            cache()->put('random_podcast_ids', $randomIds, now()->addMinutes(5));
+        }
+    
+        $selected = collect($randomIds)->shuffle()->take($count);
+    
+        $podcasts = Podcast::with(['media', 'categories', 'user'])
+            ->whereIn('id', $selected)
+            ->get();
+    
+        return [
+            'data' => $podcasts,
+            'message' => 'Random podcasts retrieved successfully.',
+            'code' => 200
+        ];
+    }*/
+    public function getRandomPodcasts(int $count = 10): array
 {
-    $podcasts = Podcast::with(['media', 'categories', 'user']) 
-        ->inRandomOrder()
-        ->paginate($perPage);
+    $randomIds = cache('random_podcast_ids');
+
+    if (empty($randomIds)) {
+        $randomIds = Podcast::inRandomOrder()
+            ->limit(50)
+            ->pluck('id')
+            ->toArray();
+
+        cache()->put('random_podcast_ids', $randomIds, now()->addMinutes(5));
+    }
+
+    $selected = collect($randomIds)->shuffle()->take($count);
+
+    $podcasts = Podcast::with(['media', 'categories', 'user'])
+        ->whereIn('id', $selected)
+        ->get();
 
     return [
         'data' => $podcasts,
@@ -115,6 +150,8 @@ class PodcastService
         'code' => 200
     ];
 }
+
+    
 
 /*public function filterByCategory(array $filters): array
 {
