@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\podcast;
+namespace App\Services\Podcast;
 
 use App\Models\Podcast;
 use App\Model\User;
@@ -126,30 +126,33 @@ class PodcastService
         ];
     }*/
     public function getRandomPodcasts(int $count = 10): array
-{
-    $randomIds = cache('random_podcast_ids');
-
-    if (empty($randomIds)) {
-        $randomIds = Podcast::inRandomOrder()
-            ->limit(50)
-            ->pluck('id')
-            ->toArray();
-
-        cache()->put('random_podcast_ids', $randomIds, now()->addMinutes(5));
+    {
+        $randomIds = cache('random_podcast_ids');
+    
+        if (empty($randomIds)) {
+            $randomIds = Podcast::whereNotNull('published_at')
+                ->where('published_at', '<=', now())
+                ->inRandomOrder()
+                ->limit(50)
+                ->pluck('id')
+                ->toArray();
+    
+            cache()->put('random_podcast_ids', $randomIds, now()->addMinutes(5));
+        }
+    
+        $selected = collect($randomIds)->shuffle()->take($count);
+    
+        $podcasts = Podcast::with(['media', 'categories', 'user'])
+            ->whereIn('id', $selected)
+            ->get();
+    
+        return [
+            'data' => $podcasts,
+            'message' => 'Random podcasts retrieved successfully.',
+            'code' => 200
+        ];
     }
-
-    $selected = collect($randomIds)->shuffle()->take($count);
-
-    $podcasts = Podcast::with(['media', 'categories', 'user'])
-        ->whereIn('id', $selected)
-        ->get();
-
-    return [
-        'data' => $podcasts,
-        'message' => 'Random podcasts retrieved successfully.',
-        'code' => 200
-    ];
-}
+    
 
     
 

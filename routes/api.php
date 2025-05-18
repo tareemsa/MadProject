@@ -7,6 +7,8 @@ use App\Http\Controllers\PodcastController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\ChannelController;
 use App\Http\Controllers\SubscriptionController;
+use App\Http\Controllers\PodcastPublishController;
+use App\Http\Controllers\SearchController;
 Route::prefix('auth')->name('auth.')->group(function () {
     
     Route::post('/register', [AuthController::class, 'register'])->name('register');
@@ -19,7 +21,8 @@ Route::prefix('auth')->name('auth.')->group(function () {
     Route::get('/podcasts/{podcast}/nested', [PodcastController::class, 'showWithAllNestedComments']);
     Route::get('/filterPodcastsByCategory', [PodcastController::class, 'filterPodcastsByCategory']);
     Route::post('/podcasts/{podcast}/view', [PodcastController::class, 'view']);
-   
+Route::get('/search', [\App\Http\Controllers\SearchController::class, 'search']);
+
 
 
 
@@ -38,10 +41,7 @@ Route::prefix('auth')->name('auth.')->group(function () {
        Route::get('/podcasts/filter', [PodcastController::class, 'filterByCategoryWithMetrics']);
        Route::post('/channel', [ChannelController::class, 'create']);
        Route::post('/channels/{channel}/subscribe', [SubscriptionController::class, 'toggle']);
-
-
-  
- 
+       Route::post('/podcast/publish/schedule', [PodcastPublishController::class, 'schedule']);
 
     });
 

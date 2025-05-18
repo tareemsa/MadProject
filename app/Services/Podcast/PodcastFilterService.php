@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\podcast;
+namespace App\Services\Podcast;
 
 use App\Models\Podcast;
 use App\Models\PodcastView;
